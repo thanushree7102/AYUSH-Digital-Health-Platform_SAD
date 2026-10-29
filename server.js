@@ -33,9 +33,19 @@ if (SEED_DEMO) seed();
 
 // ---------- app ----------
 const app = express();
+
 app.use(cors({
   origin: true,
-  allowedHeaders: ['Content-Type', 'Idempotency-Key', 'X-Role', 'X-Doctor-Id', 'X-Admin-Id', 'X-Facility-Id', 'Authorization'],
+  allowedHeaders: [
+    'Content-Type',
+    'Idempotency-Key',
+    'X-Role',
+    'X-Doctor-Id',
+    'X-Admin-Id',
+    'X-Facility-Id',
+    'X-Correlation-Id',
+    'Authorization'
+  ],
 }));
 app.use(express.json({ limit: '2mb' }));
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
