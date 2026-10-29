@@ -2,3 +2,5 @@ node_modules
 dist
 .env
 mock/mock
+mock
+.oxlintrc.json
