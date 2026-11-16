@@ -1,0 +1,80 @@
+# 4 containers: frontend (nginx) -> api (Express) -> ml (Flask) -> db (MySQL)
+# Environment (dev / staging / prod) is chosen with an env file:
+#   docker compose --env-file env/dev.env -p ayush-dev up -d --build
+name: ayush
+
+services:
+  frontend:
+    build: { context: ./frontend, dockerfile: Dockerfile }
+    image: ${DOCKERHUB_USER:-local}/ayush-frontend:${TAG:-latest}
+    ports: ["${FRONTEND_PORT:-8080}:80"]
+    depends_on:
+      api: { condition: service_healthy }
+    networks: [ayush-net]
+    restart: unless-stopped
+
+  api:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    image: ${DOCKERHUB_USER:-local}/ayush-api:${TAG:-latest}
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      PORT: 4000
+      DB_FILE: /app/data/ayush.db
+      STORAGE_DIR: /app/data/storage
+      ML_URL: http://ml:5000            # service-name DNS on the user-defined network
+      AYUSH_SECRET: ${AYUSH_SECRET:?set AYUSH_SECRET}
+      ADMIN_INVITE: ${ADMIN_INVITE:-}
+      OTP_SHOW: ${OTP_SHOW:-1}
+      SEED_DEMO: ${SEED_DEMO:-1}
+      WHATSAPP_MODE: ${WHATSAPP_MODE:-mock}
+      FACE_REQUIRED: ${FACE_REQUIRED:-1}
+    volumes: [ayush-data:/app/data]      # SQLite DB, uploads, WhatsApp login
+    depends_on:
+      ml: { condition: service_healthy }
+    networks: [ayush-net]
+    restart: unless-stopped
+
+  ml:
+    build: ./ml-service
+    image: ${DOCKERHUB_USER:-local}/ayush-ml:${TAG:-latest}
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      DB_HOST: db
+      DB_NAME: ayush_ml
+      DB_USER: ayush
+      DB_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD}
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [ayush-net]
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ayush_ml
+      MYSQL_USER: ayush
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD}
+    volumes: [mysql-data:/var/lib/mysql]  # permanent storage for the database service
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks: [ayush-net]
+    restart: unless-stopped
+
+  # Optional 5th container: own translation server. Start with --profile translate
+  translate:
+    profiles: ["translate"]
+    image: libretranslate/libretranslate:latest
+    environment: { LT_LOAD_ONLY: "en,hi,kn" }
+    networks: [ayush-net]
+
+volumes:
+  ayush-data:
+  mysql-data:
+
+networks:
+  ayush-net:

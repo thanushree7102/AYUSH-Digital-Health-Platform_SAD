@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: mysql-pvc, namespace: ayush }
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 1Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: db, namespace: ayush }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: db } }
+  template:
+    metadata: { labels: { app: db } }
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.4
+          ports: [{ containerPort: 3306 }]
+          env:
+            - { name: MYSQL_DATABASE, value: ayush_ml }
+            - { name: MYSQL_USER, value: ayush }
+            - name: MYSQL_PASSWORD
+              valueFrom: { secretKeyRef: { name: ayush-secret, key: MYSQL_PASSWORD } }
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom: { secretKeyRef: { name: ayush-secret, key: MYSQL_ROOT_PASSWORD } }
+          volumeMounts: [{ name: data, mountPath: /var/lib/mysql }]
+          readinessProbe:
+            exec: { command: ["sh", "-c", "mysqladmin ping -h localhost -uroot -p$MYSQL_ROOT_PASSWORD"] }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: mysql-pvc }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: db, namespace: ayush }
+spec:
+  selector: { app: db }
+  ports: [{ port: 3306 }]

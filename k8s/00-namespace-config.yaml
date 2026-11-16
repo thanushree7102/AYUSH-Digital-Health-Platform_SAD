@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Namespace
+metadata: { name: ayush }
+---
+apiVersion: v1
+kind: ConfigMap            # configuration separated from code
+metadata: { name: ayush-config, namespace: ayush }
+data:
+  APP_ENV: "staging"
+  ML_URL: "http://ml:5000"
+  OTP_SHOW: "1"
+  SEED_DEMO: "1"
+  WHATSAPP_MODE: "mock"
+  DB_FILE: "/app/data/ayush.db"
+  STORAGE_DIR: "/app/data/storage"

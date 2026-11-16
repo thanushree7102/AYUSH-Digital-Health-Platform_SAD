@@ -1,0 +1,15 @@
+**/node_modules
+frontend
+ml-service
+k8s
+env
+.git
+.github
+**/data
+**/storage
+**/ayush.db*
+**/ayush.secret
+**/.env
+*.log
+*.md
+*.pdf

@@ -1,0 +1,10 @@
+{
+  "name": "ayush-database",
+  "version": "2.0.0",
+  "private": true,
+  "main": "db.js",
+  "description": "AYUSH Digital Health Platform: SQLite schema, seed data and legacy migration (loaded by ../backend)",
+  "dependencies": {
+    "better-sqlite3": "^12.0.0"
+  }
+}

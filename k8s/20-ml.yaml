@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: ml, namespace: ayush }
+spec:
+  replicas: 2                      # two pods behind one Service = load balancing
+  selector: { matchLabels: { app: ml } }
+  template:
+    metadata: { labels: { app: ml } }
+    spec:
+      containers:
+        - name: ml
+          image: local/ayush-ml:latest        # or <dockerhub-user>/ayush-ml:v1
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 5000 }]
+          env:
+            - { name: DB_HOST, value: db }
+            - { name: DB_NAME, value: ayush_ml }
+            - { name: DB_USER, value: ayush }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: ayush-secret, key: MYSQL_PASSWORD } }
+          envFrom: [{ configMapRef: { name: ayush-config } }]
+          readinessProbe: { httpGet: { path: /health, port: 5000 }, initialDelaySeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: ml, namespace: ayush }
+spec:
+  selector: { app: ml }
+  ports: [{ port: 5000 }]

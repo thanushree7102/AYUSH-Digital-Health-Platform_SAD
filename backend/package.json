@@ -1,0 +1,27 @@
+{
+  "name": "ayush-backend",
+  "version": "2.0.0",
+  "private": true,
+  "main": "server.js",
+  "description": "AYUSH Digital Health Platform: Express API, face/OTP/Aadhaar, WhatsApp bot (uses ../database for SQLite)",
+  "scripts": {
+    "start": "node server.js",
+    "smoke": "node scripts/smoke-test.js && node scripts/otp-test.js && node scripts/voice-test.js",
+    "test:otp": "node scripts/otp-test.js",
+    "test:voice": "node scripts/voice-test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^18.0.9",
+    "express": "^4.21.0",
+    "multer": "^1.4.5-lts.1",
+    "qrcode": "^1.5.4",
+    "tesseract.js": "^5.1.1"
+  },
+  "optionalDependencies": {
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
+    "pino": "^10.4.0",
+    "@huggingface/transformers": "^3.8.1",
+    "ffmpeg-static": "^5.3.0"
+  }
+}

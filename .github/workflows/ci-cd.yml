@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - integration
+  pull_request:
+    branches:
+      - integration
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Build and verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            database/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          npm --prefix database ci
+          npm --prefix backend ci
+          npm --prefix frontend ci
+
+      - name: Check backend JavaScript syntax
+        run: node --check backend/server.js && node --check database/db.js
+
+      - name: Run backend smoke tests
+        run: npm --prefix backend run smoke
+
+      - name: Build frontend
+        run: npm --prefix frontend run build
+
+      - name: Check ML service Python syntax
+        run: python -m compileall -q ml-service
+
+# Deployment is intentionally not configured: no hosting target or deployment
+# credentials are present in this repository. Add a provider-specific job only
+# after its target and GitHub Actions secrets are configured.
